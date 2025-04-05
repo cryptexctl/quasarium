@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	//	"fmt"
 	"fmt"
 	"os"
 
@@ -10,37 +11,45 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version string
+
 var rootCmd = &cobra.Command{
 	Use:   "quasarium",
 	Short: "Quasarium — прошивочный качатель для Яндекса",
 	Run: func(cmd *cobra.Command, args []string) {
+		showVersion, _ := cmd.Flags().GetBool("quasarium-version")
+		if showVersion {
+			fmt.Println("Quasarium version:", Version)
+			return
+		}
+
 		deviceID, _ := cmd.Flags().GetString("device-id")
 		platform, _ := cmd.Flags().GetString("platform")
 		version, _ := cmd.Flags().GetString("version")
 
-		fmt.Println("Проверка обновлений...")
+		fmt.Println("[FETCH] Проверка обновлений...")
 
 		result, err := api.CheckForUpdate(deviceID, platform, version)
 		if err != nil {
-			fmt.Println("Ошибка запроса:", err)
+			fmt.Println("[ERR] Ошибка запроса:", err)
 			os.Exit(1)
 		}
 
 		if !result.HasUpdate {
-			fmt.Println("Обновлений нет")
+			fmt.Println("[OK] Обновлений нет")
 			return
 		}
 
-		fmt.Printf("Найдена версия: %s\n", result.Version)
-		fmt.Println("Скачивание...")
+		fmt.Printf("[UPD] Найдена версия: %s\n", result.Version)
+		fmt.Println("[=] Скачивание...")
 
 		path, err := download.DownloadFirmware(result.DownloadURL, result.Version)
 		if err != nil {
-			fmt.Println("Ошибка загрузки:", err)
+			fmt.Println("[ERR] Ошибка загрузки:", err)
 			os.Exit(1)
 		}
 
-		fmt.Println("Скачано в:", path)
+		fmt.Println("[ok] Скачано в:", path)
 	},
 }
 
@@ -48,8 +57,7 @@ func Execute() {
 	rootCmd.Flags().String("device-id", "", "ID устройства (обязателен)")
 	rootCmd.Flags().String("platform", "", "Платформа (например, saturn)")
 	rootCmd.Flags().String("version", "", "Текущая версия (можно пустую)")
-	rootCmd.MarkFlagRequired("device-id")
-	rootCmd.MarkFlagRequired("platform")
+	rootCmd.Flags().Bool("quasarium-version", false, "Показать версию quasarium")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println("Ошибка запуска:", err)

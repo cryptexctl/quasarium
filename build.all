@@ -1,0 +1,18 @@
+#!/bin/bash
+
+VERSION=$(git describe --tags --always)
+echo "🔧 Building quasarium version: $VERSION"
+
+platforms=("linux/amd64" "windows/amd64" "darwin/arm64" "darwin/amd64")
+
+for platform in "${platforms[@]}"
+do
+  IFS="/" read -r GOOS GOARCH <<< "$platform"
+  output="quasarium-$GOOS-$GOARCH"
+  [ "$GOOS" == "windows" ] && output+=".exe"
+
+  echo "⚙️  Building for $GOOS/$GOARCH → $output"
+  env GOOS=$GOOS GOARCH=$GOARCH go build -trimpath -ldflags="-X 'main.Version=$VERSION'" -o "build/$output"
+done
+
+echo "Done. Binaries are in ./build/"

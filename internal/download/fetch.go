@@ -7,8 +7,16 @@ import (
 	"os"
 	"path/filepath"
 
+	"net/url"
+
 	"github.com/schollz/progressbar/v3"
 )
+
+func safeURL(raw string) string {
+	// Парсим строку в объект URL и собираем обратно, чтобы не светилась полностью
+	u, _ := url.Parse(raw)
+	return u.Scheme + "://" + u.Host + u.Path // без query
+}
 
 func DownloadFirmware(url, version string) (string, error) {
 	dir := filepath.Join("firmwares", version)
@@ -16,7 +24,7 @@ func DownloadFirmware(url, version string) (string, error) {
 
 	dest := filepath.Join(dir, version+".zip")
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(safeURL(url))
 	if err != nil {
 		return "", err
 	}
