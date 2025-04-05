@@ -4,38 +4,55 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"quasarium/internal/api"
 	"quasarium/internal/download"
-)
 
-var (
-	deviceID string
-	platform string
-	version  string
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "quasarium",
-	Short: "Firmware fetcher from Yandex Quasar",
+	Short: "Quasarium — прошивочный качатель для Яндекса",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("[*] Fetching update...")
-		data := api.CheckUpdate(platform, deviceID, version)
-		if data.HasUpdate {
-			download.SaveFirmware(data)
-		} else {
-			fmt.Println("[!] No update available.")
+		deviceID, _ := cmd.Flags().GetString("device-id")
+		platform, _ := cmd.Flags().GetString("platform")
+		version, _ := cmd.Flags().GetString("version")
+
+		fmt.Println("Проверка обновлений...")
+
+		result, err := api.CheckForUpdate(deviceID, platform, version)
+		if err != nil {
+			fmt.Println("Ошибка запроса:", err)
+			os.Exit(1)
 		}
+
+		if !result.HasUpdate {
+			fmt.Println("Обновлений нет")
+			return
+		}
+
+		fmt.Printf("Найдена версия: %s\n", result.Version)
+		fmt.Println("Скачивание...")
+
+		path, err := download.DownloadFirmware(result.DownloadURL, result.Version)
+		if err != nil {
+			fmt.Println("Ошибка загрузки:", err)
+			os.Exit(1)
+		}
+
+		fmt.Println("Скачано в:", path)
 	},
 }
 
 func Execute() {
-	rootCmd.PersistentFlags().StringVar(&deviceID, "device-id", "443078968408042905d0", "Device ID")
-	rootCmd.PersistentFlags().StringVar(&platform, "platform", "", "Platform name (e.g. saturn)")
-	rootCmd.PersistentFlags().StringVar(&version, "version", "", "Optional: specify version")
+	rootCmd.Flags().String("device-id", "", "ID устройства (обязателен)")
+	rootCmd.Flags().String("platform", "", "Платформа (например, saturn)")
+	rootCmd.Flags().String("version", "", "Текущая версия (можно пустую)")
+	rootCmd.MarkFlagRequired("device-id")
+	rootCmd.MarkFlagRequired("platform")
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Println("Ошибка запуска:", err)
 		os.Exit(1)
 	}
 }

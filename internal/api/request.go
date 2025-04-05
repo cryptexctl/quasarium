@@ -3,27 +3,24 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+
 	"quasarium/internal/models"
 )
 
-func CheckUpdate(platform, deviceID, version string) models.FirmwareResponse {
+func CheckForUpdate(deviceID, platform, version string) (*models.FirmwareResponse, error) {
 	url := fmt.Sprintf("https://quasar.yandex.net/check_updates?device_id=%s&platform=%s&version=%s", deviceID, platform, version)
+
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return models.FirmwareResponse{}
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	var result models.FirmwareResponse
-	err = json.Unmarshal(body, &result)
-	if err != nil {
-		fmt.Println("Error parsing response:", err)
-		return models.FirmwareResponse{}
+	var data models.FirmwareResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, err
 	}
-	return result
+
+	return &data, nil
 }
