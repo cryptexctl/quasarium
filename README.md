@@ -7,7 +7,7 @@
 ## 📦 Установка
 
 ```bash
-git clone https://github.com/yourname/quasarium.git
+git clone https://github.com/cryptexctl/quasarium.git
 cd quasarium
 go mod tidy
 go build -o quasarium
