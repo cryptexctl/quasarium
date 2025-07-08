@@ -14,7 +14,7 @@ var Version string
 
 var rootCmd = &cobra.Command{
 	Use:   "quasarium",
-	Short: "Quasarium — утилита для скачивания прошивок для устройств от компании "Я"",
+	Short: "Quasarium — утилита для скачивания прошивок для устройств от компании Yandex",
 	Run: func(cmd *cobra.Command, args []string) {
 		showVersion, _ := cmd.Flags().GetBool("quasarium-version")
 		if showVersion {
